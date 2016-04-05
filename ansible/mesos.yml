@@ -1,0 +1,40 @@
+- hosts: all
+  become: true
+  tasks:
+    - name: install mesosphere
+      yum: name=http://repos.mesosphere.io/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+
+    - name: install mesos
+      yum: name=mesos
+
+
+- hosts: host1
+  become: true
+  tasks:
+    - name: install marathon
+      yum: name=marathon
+
+    - name: install zookeeper
+      yum: name=mesosphere-zookeeper
+
+    - name: start zookeeper
+      service: name=zookeeper state=started
+  
+    - name: start mesos master
+      service: name=mesos-master state=started
+
+    - name: start marathon
+      service: name=marathon state=started
+
+    - name: start mesos slave
+      service: name=mesos-slave state=started
+
+
+- hosts: host2
+  become: true
+  tasks:
+    - name: stop mesos master
+      service: name=mesos-master state=stopped
+
+    - name: start mesos slave
+      service: name=mesos-slave state=started
