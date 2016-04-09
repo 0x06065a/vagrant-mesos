@@ -1,3 +1,8 @@
+# ----------------------------------------------------
+# https://open.mesosphere.com/getting-started/install/
+# ----------------------------------------------------
+
+  
 - hosts: all
   become: true
   tasks:
@@ -6,6 +11,15 @@
 
     - name: install mesos
       yum: name=mesos
+
+    - name: add docker yum repository
+      copy: src=templates/docker.repo dest=/etc/yum.repos.d/docker.repo
+
+    - name: install docker
+      yum: name=docker-engine
+
+    - name: start docker
+      service: name=docker state=started
 
 
 - hosts: host1
@@ -17,24 +31,39 @@
     - name: install zookeeper
       yum: name=mesosphere-zookeeper
 
+    - name: setup zookeeper id
+      copy: src=templates/myid dest=/var/lib/zookeeper/myid
+
+    - name: setup server address
+      copy: src=templates/zoo.cfg dest=/etc/zookeeper/conf/zoo.cfg
+
+    - name: setup mesos master addresses
+      copy: src=templates/zk dest=/etc/mesos/zk
+
+    - name: setup mesos master quorum
+      copy: src=templates/quorum dest=/etc/mesos-master/quorum
+
     - name: start zookeeper
-      service: name=zookeeper state=started
+      service: name=zookeeper state=restarted
   
     - name: start mesos master
-      service: name=mesos-master state=started
+      service: name=mesos-master state=restarted
 
     - name: start marathon
-      service: name=marathon state=started
+      service: name=marathon state=restarted
 
     - name: start mesos slave
-      service: name=mesos-slave state=started
+      service: name=mesos-slave state=restarted
 
 
 - hosts: host2
   become: true
   tasks:
+    - name: setup mesos master addresses
+      copy: src=templates/zk dest=/etc/mesos/zk
+  
     - name: stop mesos master
       service: name=mesos-master state=stopped
 
     - name: start mesos slave
-      service: name=mesos-slave state=started
+      service: name=mesos-slave state=restarted

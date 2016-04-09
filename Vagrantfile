@@ -15,6 +15,7 @@ Vagrant.configure(2) do |config|
   
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "ansible/mesos.yml"
+    ansible.verbose = "vvvv"
   end
 
   config.vm.provider "virtualbox" do |v|
