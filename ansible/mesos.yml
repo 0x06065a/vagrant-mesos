@@ -3,7 +3,7 @@
 # ----------------------------------------------------
 
   
-- hosts: all
+- hosts: mesos_cluster
   become: true
   tasks:
     - name: install mesosphere
@@ -22,7 +22,7 @@
       service: name=docker state=started
 
 
-- hosts: host1
+- hosts: mesos_masters
   become: true
   tasks:
     - name: install marathon
@@ -30,18 +30,40 @@
 
     - name: install zookeeper
       yum: name=mesosphere-zookeeper
+  
+  
+    - name: set zookeeper id
+      template: src=templates/myid.j2 dest=/var/lib/zookeeper/myid
 
-    - name: setup zookeeper id
-      copy: src=templates/myid dest=/var/lib/zookeeper/myid
+    - name: set zookeeper server address
+      template: src=templates/zoo.cfg.j2 dest=/etc/zookeeper/conf/zoo.cfg
+  
+  
+    - name: set mesos masters addresses
+      copy: src=templates/zk.mesos-masters dest=/etc/mesos/zk
 
-    - name: setup server address
-      copy: src=templates/zoo.cfg dest=/etc/zookeeper/conf/zoo.cfg
+    - name: set mesos master quorum
+      template: src=templates/quorum.j2 dest=/etc/mesos-master/quorum
 
-    - name: setup mesos master addresses
-      copy: src=templates/zk dest=/etc/mesos/zk
+    - name: set mesos master ip
+      template: src=templates/ip.j2 dest=/etc/mesos-master/ip
 
-    - name: setup mesos master quorum
-      copy: src=templates/quorum dest=/etc/mesos-master/quorum
+    - name: setup mesos master hostname
+      template: src=templates/ip.j2 dest=/etc/mesos-master/hostname
+  
+
+    - name: create marathon conf dir
+      file: path=/etc/marathon/conf state=directory
+
+    - name: set marathon hostname
+      template: src=templates/ip.j2 dest=/etc/marathon/conf/hostname
+  
+    - name: set marathon mesos addresses
+      copy: src=templates/zk.mesos-masters dest=/etc/marathon/conf/master
+  
+    - name: set marathon addresses
+      copy: src=templates/zk.marathon dest=/etc/marathon/conf/zk
+  
 
     - name: start zookeeper
       service: name=zookeeper state=restarted
@@ -52,18 +74,26 @@
     - name: start marathon
       service: name=marathon state=restarted
 
-    - name: start mesos slave
-      service: name=mesos-slave state=restarted
-
-
-- hosts: host2
+ 
+- hosts: mesos_slaves:!mesos_masters
   become: true
   tasks:
-    - name: setup mesos master addresses
-      copy: src=templates/zk dest=/etc/mesos/zk
+    - name: set mesos masters addresses
+      copy: src=templates/zk.mesos-masters dest=/etc/mesos/zk
   
     - name: stop mesos master
       service: name=mesos-master state=stopped
 
+  
+- hosts: mesos_slaves
+  become: true
+  tasks:  
+    - name: set mesos slave ip
+      template: src=templates/ip.j2 dest=/etc/mesos-slave/ip
+
+    - name: set mesos slave hostname
+      template: src=templates/ip.j2 dest=/etc/mesos-slave/hostname
+
+  
     - name: start mesos slave
       service: name=mesos-slave state=restarted
