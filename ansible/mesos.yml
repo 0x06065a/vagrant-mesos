@@ -36,7 +36,7 @@
       template: src=templates/myid.j2 dest=/var/lib/zookeeper/myid
 
     - name: set zookeeper server address
-      template: src=templates/zoo.cfg.j2 dest=/etc/zookeeper/conf/zoo.cfg
+      template: src=templates/zoo.cfg.j2 dest=/etc/zookeeper/conf/zoo.cfg backup=yes
   
   
     - name: set mesos masters addresses
