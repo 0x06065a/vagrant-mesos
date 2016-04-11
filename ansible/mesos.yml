@@ -94,6 +94,9 @@
     - name: set mesos slave hostname
       template: src=templates/ip.j2 dest=/etc/mesos-slave/hostname
 
+    - name: set mesos slave containerizers
+      copy: src=templates/containerizers dest=/etc/mesos-slave/containerizers
+
   
     - name: start mesos slave
       service: name=mesos-slave state=restarted
